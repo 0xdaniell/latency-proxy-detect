@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex">
+  <title>Visits · latency check</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="wide">
+    <h1>Visits</h1>
+    <form id="login">
+      <input type="password" id="token" placeholder="Admin token" autocomplete="current-password" required>
+      <button type="submit">Show</button>
+    </form>
+    <p id="status" class="muted"></p>
+    <table id="table" hidden>
+      <thead><tr><th>Time (UTC)</th><th>IP</th><th>Verdict</th><th>Diff</th><th>WS</th><th>TCP</th><th>ICMP</th><th>0trace</th><th>Rule</th><th>User agent</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </main>
+  <script src="config.js"></script>
+  <script>
+    "use strict";
+    const SERVER = (window.LPD_SERVER || "").replace(/\/$/, "");
+    const f = (v) => v == null ? "–" : v.toFixed(1);
+    const cell = (text, cls) => { const td = document.createElement("td"); td.textContent = text; if (cls) td.className = cls; return td; };
+    async function load(token) {
+      const status = document.getElementById("status");
+      status.textContent = "Loading…";
+      const resp = await fetch(`${SERVER}/api/admin/visits?limit=500`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+      if (!resp.ok) { status.textContent = resp.status === 401 ? "Wrong token." : `Error ${resp.status}`; return; }
+      const rows = await resp.json();
+      const tbody = document.querySelector("#table tbody");
+      tbody.replaceChildren();
+      for (const r of rows) {
+        const tr = document.createElement("tr");
+        tr.append(
+          cell(r.time.replace("T", " ").slice(0, 19)),
+          cell(r.ip),
+          cell(r.verdict, `tag ${r.verdict}`),
+          cell(f(r.diffMs), "num"),
+          cell(f(r.rtt.webSocketMs), "num"),
+          cell(f(r.rtt.tcpHandshakeMs), "num"),
+          cell(f(r.rtt.icmpMs), "num"),
+          cell(f(r.rtt.zeroTraceMs), "num"),
+          cell(r.label),
+          cell(r.userAgent || ""),
+        );
+        tbody.append(tr);
+      }
+      document.getElementById("table").hidden = false;
+      status.textContent = `${rows.length} most recent visits.`;
+      sessionStorage.setItem("lpd-token", token);
+    }
+    document.getElementById("login").addEventListener("submit", (e) => {
+      e.preventDefault();
+      load(document.getElementById("token").value);
+    });
+    const saved = sessionStorage.getItem("lpd-token");
+    if (saved) load(saved);
+  </script>
+</body>
+</html>

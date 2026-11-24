@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Are you behind a VPN? · latency check</title>
+  <meta name="description" content="Open-source VPN and proxy detection from network latency alone, after the CalcuLatency paper (USENIX Security 2024).">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">Latency-based proxy check</p>
+      <h1>Are you behind a VPN or a proxy?</h1>
+      <p class="lede">This page times the path to your browser and the path to your IP address. If the browser is much farther away than the address, something sits in between.</p>
+    </header>
+
+    <section id="verdict" class="verdict" data-state="idle" aria-live="polite">
+      <div class="verdict-title" id="verdict-title">Ready</div>
+      <div class="verdict-detail" id="verdict-detail">Starting the measurement takes about ten seconds.</div>
+      <progress id="progress" max="100" value="0" hidden></progress>
+    </section>
+
+    <section class="numbers" id="numbers" hidden>
+      <h2>What was measured</h2>
+      <dl>
+        <div><dt>Browser (WebSocket echo)</dt><dd id="r-ws">–</dd><p>Application layer: answered by your browser, wherever it runs.</p></div>
+        <div><dt>TCP handshake</dt><dd id="r-tcp">–</dd><p>Transport layer: answered by whatever opened the TCP connection.</p></div>
+        <div><dt>Ping (ICMP)</dt><dd id="r-icmp">–</dd><p>Network layer: answered by the IP address you connect from.</p></div>
+        <div><dt>0trace</dt><dd id="r-zt">–</dd><p id="r-zt-note">Network layer: a traceroute inside this connection.</p></div>
+      </dl>
+      <p class="diff">Difference used: <strong id="r-diff">–</strong> <span class="muted">(threshold <span id="r-threshold">50</span> ms, rule <code id="r-label">–</code>)</span></p>
+      <p class="muted" id="r-ip"></p>
+      <button id="again" type="button">Measure again</button>
+    </section>
+
+    <section class="explain">
+      <h2>How it works</h2>
+      <ol>
+        <li>Your browser opens a WebSocket to the server, which sends it 100 small pings. Each carries a random nonce, so the reply can't be sent early.</li>
+        <li>The server reads the round trip time of the TCP handshake, pings your IP address, and runs <em>0trace</em>: a traceroute sent inside the already-open connection, which passes firewalls and NAT.</li>
+        <li>With a VPN, the pings to your IP stop at the VPN server, but the WebSocket travels on to your browser. A difference above 50&nbsp;ms means the browser is far from the address it connects from.</li>
+      </ol>
+      <p><strong>Limits.</strong> A VPN server within roughly 1,000&nbsp;km of you is usually not detected. Neither is a browser that itself runs on a remote machine. This is one signal, not proof.</p>
+      <p>Method: Ramesh, Winter, Korman, Ensafi. <a href="https://www.usenix.org/conference/usenixsecurity24/presentation/ramesh" rel="noreferrer">CalcuLatency: Leveraging Cross-Layer Network Latency Measurements to Detect Proxy-Enabled Abuse</a>. USENIX Security 2024. This site is an independent implementation.</p>
+    </section>
+
+    <footer>
+      <p><strong>Privacy.</strong> The server keeps a log of each measurement: the IP address you connect from, the timings above, the result and your browser's user agent. It sets no cookies and runs no third-party scripts. To check whether the last hop shares a network with your address, the server may look the address up on RIPEstat.</p>
+      <p><a href="https://github.com/" id="source-link" rel="noreferrer">Source code</a></p>
+    </footer>
+  </main>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

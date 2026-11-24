@@ -1,0 +1,43 @@
+name: pages
+
+# Publishes web/ to GitHub Pages. Set the repository variable LPD_SERVER_URL
+# (Settings > Secrets and variables > Actions > Variables) to the measurement
+# server, for example https://34-56-78-90.sslip.io
+
+on:
+  push:
+    branches: [main]
+    paths: [web/**, .github/workflows/pages.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Point the site at the measurement server
+        env:
+          SERVER: ${{ vars.LPD_SERVER_URL }}
+          SOURCE: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          test -n "$SERVER" || { echo "Set the LPD_SERVER_URL repository variable"; exit 1; }
+          printf 'window.LPD_SERVER = %s;\nwindow.LPD_SOURCE = %s;\n' \
+            "$(jq -Rn --arg v "$SERVER" '$v')" "$(jq -Rn --arg v "$SOURCE" '$v')" > web/config.js
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+      - id: deployment
+        uses: actions/deploy-pages@v4
