@@ -60,19 +60,18 @@ gcloud compute instances create lpd --zone=$ZONE \
   --machine-type=e2-micro --boot-disk-type=pd-standard --boot-disk-size=10GB \
   --image-family=debian-12 --image-project=debian-cloud --tags=lpd \
   --metadata-from-file=startup-script=deploy/gce-startup.sh \
-  --metadata=lpd-image=ghcr.io/$OWNER/latency-proxy-detect:latest,lpd-admin-token=$TOKEN,lpd-allowed-origins=https://$OWNER.github.io,lpd-source-url=https://github.com/$OWNER/latency-proxy-detect
+  --metadata=lpd-repo=https://github.com/$OWNER/latency-proxy-detect,lpd-admin-token=$TOKEN,lpd-allowed-origins=https://$OWNER.github.io,lpd-source-url=https://github.com/$OWNER/latency-proxy-detect
 
 gcloud compute instances describe lpd --zone=$ZONE \
   --format='get(networkInterfaces[0].accessConfigs[0].natIP)'
 ```
 
-If the address is `34.56.78.90`, the server answers at `https://34-56-78-90.sslip.io`. [sslip.io](https://sslip.io) resolves that name to the IP, and the server fetches a Let's Encrypt certificate for it without a contact e-mail. Open that address: the server serves the page itself.
+The VM builds the server from the repository on first boot, which takes a few minutes. If the address is `34.56.78.90`, the server answers at `https://34-56-78-90.sslip.io`. [sslip.io](https://sslip.io) resolves that name to the IP, and the server fetches a Let's Encrypt certificate for it without a contact e-mail. Open that address: the server serves the page itself.
 
 To also serve the page from GitHub Pages:
 1. Under Settings → Pages, set the source to **GitHub Actions**.
 2. Under Settings → Secrets and variables → Actions → Variables, add `LPD_SERVER_URL` = `https://34-56-78-90.sslip.io`.
 3. Run the `pages` workflow.
-4. Make the container package public (Packages → latency-proxy-detect → Package settings), so the VM can pull it.
 
 The address changes if the VM is stopped and started. The startup script picks up the new one by itself; update `LPD_SERVER_URL` to match.
 
