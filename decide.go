@@ -77,7 +77,16 @@ func minDur(a, b time.Duration) time.Duration {
 func Decide(in Inputs, threshold time.Duration) Decision {
 	d := decide(in)
 	switch {
-	case d.Label == LabelNoData || d.BestEffort:
+	case d.Label == LabelNoData:
+		d.Verdict = VerdictInconclusive
+	case d.BestEffort && d.Diff <= threshold:
+		// A best-effort RTT belongs to a hop on the path *before* the
+		// connecting address, so it can only be lower than the RTT to that
+		// address, and the difference can only be smaller in truth. A small
+		// upper bound is therefore conclusive. (This refines the paper,
+		// which sets every best-effort case aside.)
+		d.Verdict = VerdictDirect
+	case d.BestEffort:
 		d.Verdict = VerdictInconclusive
 	case d.Diff > threshold:
 		d.Verdict = VerdictProxy

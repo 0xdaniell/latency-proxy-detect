@@ -41,9 +41,17 @@ func TestDecide(t *testing.T) {
 			label: LabelWs0TNetwork, diffMs: 6, verdict: VerdictDirect,
 		},
 		{
-			name:  "0trace stopped elsewhere: best effort",
+			name:  "0trace stopped at a hop far from the client: inconclusive",
 			in:    Inputs{WS: ms(120), TCP: ms(119), ZeroTrace: ms(20)},
 			label: LabelBestEffortWs0T, diffMs: 100, verdict: VerdictInconclusive,
+		},
+		{
+			// Seen live: Google's edge router near the visitor answers 0trace,
+			// the visitor's ISP does not. The hop is on the path before the
+			// client, so a small difference is an upper bound.
+			name:  "0trace stopped at a hop close to the client: direct",
+			in:    Inputs{WS: ms(156), TCP: ms(156), ZeroTrace: ms(150)},
+			label: LabelBestEffortWs0T, diffMs: 6, verdict: VerdictDirect,
 		},
 		{
 			name:  "SOCKS proxy: TCP and ICMP both end at the proxy",

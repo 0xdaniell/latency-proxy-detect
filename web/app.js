@@ -63,7 +63,7 @@ function showResult(r) {
       "Your browser and your IP address answered at the same time. A VPN server close to you would look the same.");
   } else {
     setState("inconclusive", "Inconclusive", "Not enough signal.",
-      "Your network didn’t answer enough probes for a reliable verdict. Measuring again often helps.");
+      "Your network didn’t answer our probes all the way to your address, and the part we could see leaves room for a proxy. Measuring again sometimes helps.");
   }
 
   showBars(r.rtt.webSocketMs, networkRTT(r));

@@ -17,7 +17,9 @@ A visitor opens the page. The server then measures four round trip times:
 | Network | 5 ICMP echo requests to the connecting IP | the **IP address** the visitor connects from |
 | Network | **0trace**: a traceroute sent *inside* the already-open TCP connection, so it passes NAT and stateful firewalls | the IP address, or the last hop before it |
 
-On a direct connection, the browser and the IP address are the same machine (or the same home network), so all the RTTs agree. Through a VPN, the network-layer probes stop at the VPN server, while the WebSocket echoes travel on to the browser. The decision tree from the paper (Figure 6) picks the right pair of RTTs. A difference above **50 ms** is reported as a VPN or proxy. The difference also bounds the visitor-to-proxy distance: at most about 66 km per millisecond.
+On a direct connection, the browser and the IP address are the same machine (or the same home network), so all the RTTs agree. Through a VPN, the network-layer probes stop at the VPN server, while the WebSocket echoes travel on to the browser. The decision tree from the paper (Figure 6) picks the right pair of RTTs. A difference above **50 ms** is reported as a VPN or proxy.
+
+When neither ping nor 0trace reaches the visitor's address, the paper calls the result "best effort" and sets it aside. This implementation refines that rule. The farthest hop that did answer lies on the path *before* the address, so its RTT can only be lower. A best-effort difference is therefore an upper bound, and when even that is below the threshold, the visit is reported as direct. Only large best-effort differences are reported as inconclusive. On Google Cloud this matters often: the farthest answering hop is usually Google's edge router close to the visitor. The difference also bounds the visitor-to-proxy distance: at most about 66 km per millisecond.
 
 The paper's evaluation (about 1,200 measurements from 37 countries) found:
 - 0.95% false positives;
