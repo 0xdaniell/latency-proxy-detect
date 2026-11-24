@@ -9,17 +9,17 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="wide">
+  <main class="admin">
     <h1>Visits</h1>
     <form id="login">
       <input type="password" id="token" placeholder="Admin token" autocomplete="current-password" required>
-      <button type="submit">Show</button>
+      <button class="btn" type="submit">Show visits</button>
     </form>
     <p id="status" class="muted"></p>
-    <table id="table" hidden>
+    <div class="table-wrap" id="table" hidden><table>
       <thead><tr><th>Time (UTC)</th><th>IP</th><th>Verdict</th><th>Diff</th><th>WS</th><th>TCP</th><th>ICMP</th><th>0trace</th><th>Rule</th><th>User agent</th></tr></thead>
       <tbody></tbody>
-    </table>
+    </table></div>
   </main>
   <script src="config.js"></script>
   <script>
@@ -47,7 +47,7 @@
           cell(f(r.rtt.icmpMs), "num"),
           cell(f(r.rtt.zeroTraceMs), "num"),
           cell(r.label),
-          cell(r.userAgent || ""),
+          cell(r.userAgent || "", "ua"),
         );
         tbody.append(tr);
       }
